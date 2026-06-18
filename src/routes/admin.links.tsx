@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { publicLinks, findProfessional } from "@/mocks/data";
+import { useStore } from "@/mocks/store";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/admin/links")({
@@ -8,6 +8,9 @@ export const Route = createFileRoute("/admin/links")({
 });
 
 function Links() {
+  const publicLinks = useStore((s) => s.links);
+  const professionals = useStore((s) => s.professionals);
+  const findProfessional = (id: string) => professionals.find((p) => p.id === id);
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-black">Links e Cobertura</h1>

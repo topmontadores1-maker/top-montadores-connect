@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { auditLog } from "@/mocks/data";
+import { useStore } from "@/mocks/store";
 
 export const Route = createFileRoute("/admin/auditoria")({
   head: () => ({ meta: [{ title: "Auditoria — Admin" }] }),
@@ -7,6 +7,7 @@ export const Route = createFileRoute("/admin/auditoria")({
 });
 
 function Auditoria() {
+  const auditLog = useStore((s) => s.audit);
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-black">Auditoria</h1>
