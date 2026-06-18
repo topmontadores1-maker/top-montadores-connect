@@ -1,150 +1,111 @@
+## Objetivo
 
-# Top Montadores — Plano de Implementação (UI)
+Evoluir o painel admin do "Top Montadores" para cobrir os requisitos de **cadastro/gestão**, **atualização global** e **substituição de profissional**, mantendo o trabalho 100% no frontend com mock data (sem backend, sem chaves).
 
-Escopo: somente frontend com dados mockados. Sem backend, sem chaves de API, sem conexão a banco. Foco em layout profissional, responsivo e voltado para conversão via WhatsApp.
+---
 
-## Stack e fundamentos
+## 1. Cadastro e gestão de montadores
 
-- TanStack Start (já configurado), Tailwind v4, shadcn/ui.
-- Fonte Nunito carregada via `<link>` no `__root.tsx` (preconnect + Google Fonts), registrada em `@theme` como `--font-sans`.
-- Tokens em `src/styles.css`:
-  - `--primary: oklch(...)` ≈ `#294380`
-  - `--secondary: oklch(...)` ≈ `#2A4481`
-  - Tons auxiliares: surface, muted, border, success (verde WhatsApp para CTA), foreground.
-- Componentes reutilizáveis em `src/components/` (Logo, Header, Footer, ServiceCard, ProfessionalCard, WhatsAppButton, SearchForm, EmptyState, ErrorState, LoadingState, DataTable, StatCard, Sidebar, Modal wrappers).
-- Mock data em `src/mocks/` (montadores, serviços, cidades, métricas).
-- SEO: `head()` por rota com title/description/OG distintos.
+### 1.1 Cadastro manual
+- Novo botão **"Novo montador"** na toolbar de `/admin/montadores`.
+- Abre `Dialog` com formulário (react-hook-form + zod):
+  - Nome, WhatsApp (normalizado com máscara), e-mail, doc, foto (URL), cidade, UF, bairros, horário, serviços (multi-select), status (ativo/pausado/pendente), observações.
+- Validações: nome obrigatório, WhatsApp BR válido, UF de 2 letras, ao menos 1 serviço.
+- Submit → adiciona ao store mock e exibe `toast.success`.
 
-## Estrutura de rotas
+### 1.2 Importação por planilha
+- Já existe `/admin/importacoes` com preview. Apenas reforçar:
+  - Link direto a partir do botão **"Importar planilha"** na tela de montadores.
+  - Após "Importar válidas", redireciona para a lista com toast somando linhas importadas.
 
-```
-src/routes/
-  __root.tsx               (HeadContent + fonte Nunito + Outlet)
-  index.tsx                (Home pública)
-  s.$servico.$cidade.tsx   (Página de serviço por cidade — ex: /s/instalacao-tv/balneario-camboriu-sc)
-  montador.tsx             (Layout “Sou montador” — landing simples)
-  admin.tsx                (Layout do painel com Sidebar + Outlet)
-  admin.index.tsx          (Dashboard)
-  admin.montadores.tsx     (Lista de montadores)
-  admin.montadores.$id.tsx (Detalhe com abas)
-  admin.links.tsx          (Links e Cobertura)
-  admin.servicos.tsx
-  admin.importacoes.tsx    (Importação de planilha)
-  admin.cidades.tsx
-  admin.relatorios.tsx
-  admin.configuracoes.tsx
-  admin.auditoria.tsx
-```
+### 1.3 Pesquisa avançada
+Refatorar a toolbar de `/admin/montadores` para filtrar por:
+- Texto livre (nome **ou** WhatsApp).
+- Cidade (combobox).
+- Estado/UF (select).
+- Serviço (select, baseado em `services`).
+- Status (Ativo / Pausado / Pendente / Todos).
+- Botão "Limpar filtros". Estado vazio dedicado quando nada bate.
 
-Observação: o painel admin é puramente visual (sem autenticação real), apenas demonstrativo.
+### 1.4 Links vinculados ao montador
+Na rota `/admin/montadores/$id`, aba **"Links públicos"**:
+- Tabela com todos os `publicLinks` onde `professionalId === id`.
+- Colunas: Serviço, Cidade/UF, URL, Status, Cliques, Ações (abrir, copiar).
+- Estado vazio: "Este montador ainda não tem links."
 
-## 1. Home pública (`/`)
+### 1.5 Pausar profissional (soft)
+- Substituir a noção atual de "inativo" por **"pausado"** (preserva histórico).
+- Ação **"Pausar"** / **"Reativar"** na tabela e na tela de detalhe.
+- Confirmação via `AlertDialog` informando: "Os links continuarão existindo, mas exibirão aviso de profissional indisponível. Nenhum dado é apagado."
+- Badge de status com cor própria.
 
-- Header fixo: Logo “Top Montadores” à esquerda, navegação enxuta e botão `Sou montador` (variant secondary/outline) à direita.
-- Hero centralizado:
-  - H1: “Encontre um montador perto de você”
-  - Subtítulo curto de confiança.
-  - Formulário em card branco com shadow:
-    - Input “Qual serviço você precisa?” (com ícone)
-    - Input “Cidade ou estado” (com ícone)
-    - Botão primário “Buscar montador” (cor primária, full em mobile)
-    - Botão secundário “Usar minha localização” (ghost/outline, ícone de pin)
-- Grid responsivo de tipos de serviço (8–12 cards com ícone + nome): Instalação de TV, Montagem de móveis, Guarda-roupa, Cozinha planejada, Persianas, Suporte/prateleira, Berço, Escritório, etc.
-- Bloco de confiança: 3–4 selos/benefícios (Profissionais verificados, Atendimento local, Resposta rápida no WhatsApp, Cobertura nacional) + faixa com números mockados.
-- Footer institucional: colunas (Sobre, Para clientes, Para montadores, Legal), redes sociais, copyright.
+---
 
-Estados: form com validação leve, loading no botão de busca, empty/erro reservados para tela de resultado (fora deste escopo inicial — busca leva à página de serviço/cidade simulada).
+## 2. Atualização global (foto / WhatsApp)
 
-## 2. Página de serviço por cidade (`/s/$servico/$cidade`)
+### 2.1 Modelo mock
+No mock, adicionar a cada `PublicLink` os campos opcionais:
+- `photoOverride?: string | null`
+- `whatsappOverride?: string | null`
 
-- Breadcrumb: Home / Serviços / {Serviço} / {Cidade, UF}
-- H1 dinâmico: “Instalação de TV em Balneário Camboriú, SC” (derivado dos params + mock).
-- Card único de profissional responsável (sem ranking, sem destaques, sem busca por nome):
-  - Foto circular, nome, badge “Profissional responsável nesta cidade”.
-  - Lista de serviços atendidos (chips).
-  - Horário de atendimento e cidade/UF.
-  - CTA primário grande: “Chamar no WhatsApp” (verde, ícone WhatsApp, abre `https://wa.me/...` com mensagem pré-preenchida).
-  - CTA secundário: “Compartilhar link” (usa `navigator.share` com fallback para copiar URL + toast).
-- Bloco “Serviços relacionados” na mesma cidade (chips/cards que linkam para outras combinações).
-- Conteúdo local SEO: 2–3 parágrafos sobre o serviço naquela cidade, FAQ curta (accordion), bairros atendidos.
-- `head()` com title/description/OG dinâmicos por serviço+cidade. og:image apenas se houver foto do profissional.
-- Estados: loading skeleton do card, empty (“Em breve nesta cidade” + CTA de cadastro), erro (boundary com retry).
+Se `null/undefined`, o link **herda** do profissional (sem exceção configurada).
 
-Explicitamente fora: ranking, lista de profissionais, busca por nome.
+### 2.2 Modal "Atualização global"
+Refatorar o modal existente para um fluxo em 2 passos:
+1. **Selecionar campo**: Foto, WhatsApp, ou ambos. Inputs com preview.
+2. **Confirmação com impacto**:
+   - Contador: *"Esta alteração afetará **N links** (M sem exceção configurada). X links têm exceção e não serão alterados."*
+   - Lista resumida (até 5 + "ver mais") dos links impactados.
+   - Botões: Cancelar / Confirmar atualização.
+3. Aplicar → atualiza profissional no store, links sem override refletem automaticamente, toast e entrada em auditoria.
 
-## 3. Painel administrativo (`/admin/*`)
+### 2.3 Indicação de exceção
+Na aba "Links públicos" do detalhe, badge **"Exceção"** quando o link tem override, com link "Remover exceção".
 
-Layout: Sidebar fixa colapsável (shadcn sidebar) + área principal com header simples (título da página + ações).
+---
 
-Itens da sidebar (ícones lucide): Dashboard, Montadores, Links e Cobertura, Serviços, Importações, Cidades, Relatórios, Configurações, Auditoria.
+## 3. Substituição de profissional
 
-### Dashboard (`/admin`)
-- 4–6 StatCards: Total de montadores, Cidades cobertas, Links ativos, Cliques WhatsApp (7d), Importações no mês, Pendências.
-- 2 gráficos mockados (linha de cliques e barras por estado) usando Recharts.
-- Lista “Últimas atividades” (auditoria resumida).
+### 3.1 Regras
+- Mantém URLs/slugs existentes (`/s/$servico/$cidade`).
+- Apenas troca o `professionalId` nos links selecionados.
+- Escopos de substituição:
+  - Todos os links do profissional A → profissional B.
+  - Subconjunto por cidade/UF/serviço (filtros dentro do modal).
 
-### Montadores (`/admin/montadores`)
-- Filtros: busca, estado, cidade, status (ativo/inativo/pendente), faixa de nº de links.
-- DataTable responsiva (cards em mobile) com colunas: Foto, Nome, WhatsApp, Cidade, Estado, Nº de links, Status (badge), Ações (ver, editar, substituir, desativar).
-- Toolbar com botões: “Novo montador”, “Atualização global” (abre modal foto/WhatsApp), “Substituir profissional” (abre modal de substituição em todos os links).
-- Estados: loading (skeleton de linhas), vazio (ilustração + CTA), erro (retry).
+### 3.2 Modal "Substituir profissional"
+1. Selecionar profissional **origem** (autocomplete).
+2. Selecionar profissional **destino** (autocomplete, exibe serviços/cidades cobertos para alerta de mismatch).
+3. Filtros opcionais (cidade, serviço).
+4. Preview: tabela "X links serão transferidos. Y links foram excluídos por filtro."
+5. Avisos quando destino não cobre o serviço/cidade do link (badge "Atenção", não bloqueia).
+6. Confirmar → atualiza store, dispara toast e auditoria.
 
-### Detalhe do montador (`/admin/montadores/$id`)
-Tabs (shadcn Tabs):
-1. Dados gerais — foto, nome, WhatsApp, e-mail, documento, status, observações.
-2. Cobertura e serviços — multi-select de serviços, cidades atendidas (chips com add/remove), horário.
-3. Links públicos — tabela com slug, serviço, cidade, URL pública, cliques, ações (copiar, abrir, desativar).
-4. Histórico — timeline de alterações (auditoria do registro).
+### 3.3 Auditoria
+Adicionar entradas em `auditLog` para:
+- Atualização global de foto/WhatsApp (com contagem).
+- Substituição de profissional (origem → destino, N links).
+- Pausar/reativar montador.
+- Cadastro manual e importação concluída.
 
-### Modais
-- Atualização global de foto e WhatsApp: form com upload de imagem (preview) + input de WhatsApp com máscara, aviso “Será aplicado em todos os links públicos deste montador”, confirmação.
-- Substituição de profissional em todos os links: seletor do montador atual → seletor do novo montador, preview do impacto (X links em Y cidades), confirmação dupla.
+Aba **"Histórico"** do detalhe do montador exibe somente eventos cujo `target` é o próprio montador.
 
-### Links e Cobertura (`/admin/links`)
-- Tabela: serviço, cidade/UF, montador responsável, URL, status, cliques. Filtros por serviço/estado/sem cobertura.
-
-### Serviços / Cidades / Relatórios / Configurações / Auditoria
-- Serviços: CRUD visual com ícone, nome, slug, ativo.
-- Cidades: lista com UF, status de cobertura, montador responsável.
-- Relatórios: filtros de período + cards e tabela exportável (mock).
-- Configurações: tela com seções (Marca, Mensagens padrão de WhatsApp, Domínios, Integrações — todas visuais).
-- Auditoria: tabela de eventos (quem, quando, o quê, antes/depois).
-
-### Importação de planilha (`/admin/importacoes`)
-- Upload (drag-and-drop) de CSV/XLSX.
-- Preview em tabela das primeiras N linhas.
-- Validações por coluna (obrigatórios, formato de WhatsApp, UF válida, serviço existente).
-- Coluna “Status da linha”: OK / Aviso / Erro, com tooltip da mensagem.
-- Resumo no topo: total, válidas, com aviso, com erro.
-- Botão “Importar válidas” (apenas simula com toast), “Baixar erros”.
-- Histórico de importações abaixo.
-
-## Componentes reutilizáveis chave
-
-- `Logo`, `Header`, `Footer`, `SearchForm`
-- `ServiceIconCard`, `ProfessionalCard`, `WhatsAppCTA`, `ShareButton`
-- `PageHeader`, `Breadcrumbs`, `Section`
-- `DataTable` (com mobile cards), `Toolbar`, `FilterBar`
-- `StatCard`, `EmptyState`, `ErrorState`, `LoadingSkeleton`
-- `AdminSidebar`, `AdminShell`
-- Wrappers de Dialog/Sheet para os modais
+---
 
 ## Detalhes técnicos
 
-- Cores via tokens em `@theme inline` apontando para variáveis em `:root` (oklch equivalentes a `#294380` e `#2A4481`); botões usam `bg-primary`/`bg-secondary` — nada de cores hard-coded em componentes.
-- Botão WhatsApp usa token semântico `--whatsapp` (verde) declarado no design system.
-- Nunito: `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">` no `__root.tsx`; `@theme { --font-sans: "Nunito", sans-serif; }`.
-- Cada rota define `head()` próprio com title/description/OG distintos; rota de serviço/cidade gera meta dinâmica a partir dos params.
-- Nenhuma chamada a banco, nenhuma chave de API. Dados vêm de `src/mocks/`. Formulários apenas simulam ações com toasts (`sonner`).
-- Acessibilidade: labels em todos os inputs, foco visível, contraste validado, navegação por teclado nos modais.
-- Responsividade: mobile-first; tabelas viram cards no mobile; sidebar do admin colapsa para ícones e abre como sheet no mobile.
+- **Store mock reativo**: criar `src/mocks/store.ts` com `zustand` (já comum no projeto via shadcn? se não estiver, usar `bun add zustand`) para tornar profissionais, links e auditoria mutáveis em runtime e refletir entre telas.
+- **Componentes novos**:
+  - `src/components/admin/montador-form.tsx` (cadastro/edição).
+  - `src/components/admin/global-update-modal.tsx` (refator, 2 passos).
+  - `src/components/admin/replace-professional-modal.tsx` (refator com filtros + preview).
+  - `src/components/admin/links-table.tsx` (reaproveitável em detalhe e em `/admin/links`).
+  - `src/components/admin/status-badge.tsx`.
+- **Tipos**: estender `Professional.status` para `"ativo" | "pausado" | "pendente"` e migrar usos atuais de `"inativo"`.
+- **Validação**: `zod` + `react-hook-form` em todos os formulários.
+- **Sem backend**: nenhuma chamada Supabase, nenhum env, nenhuma chave. Toda mutação é em memória + toast.
+- **Acessibilidade**: foco automático no primeiro campo do modal, descrições em `AlertDialog`, labels associadas.
+- **Estados**: loading (skeleton em tabelas), vazio (mensagens dedicadas), erro (boundary nas rotas afetadas).
 
-## Fora de escopo (não será feito)
-
-- Autenticação real do admin.
-- Persistência, APIs, integrações (Supabase, edge functions, etc.).
-- Ranking, profissionais em destaque ou busca por nome na página de serviço.
-
-## Entregáveis
-
-- Home, página de serviço/cidade e todas as telas/abas/modais do painel admin navegáveis com dados mockados, prontas para futura integração.
+## Fora do escopo
+- Autenticação real, persistência, integração com WhatsApp Business API, envio de planilha real ao servidor, ranking/SEO.
