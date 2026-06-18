@@ -14,7 +14,7 @@ export type Professional = {
   state: string;
   services: string[];
   hours: string;
-  status: "ativo" | "inativo" | "pendente";
+  status: "ativo" | "pausado" | "pendente";
   linksCount: number;
   email?: string;
   doc?: string;
@@ -40,6 +40,8 @@ export type PublicLink = {
   url: string;
   status: "ativo" | "inativo";
   clicks: number;
+  photoOverride?: string | null;
+  whatsappOverride?: string | null;
 };
 
 export type AuditEvent = {
@@ -151,7 +153,7 @@ export const professionals: Professional[] = [
     state: "RS",
     services: ["montagem-moveis", "desmontagem"],
     hours: "Seg a Sáb, 8h às 18h",
-    status: "inativo",
+    status: "pausado",
     linksCount: 0,
   },
 ];
