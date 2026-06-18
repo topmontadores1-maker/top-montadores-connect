@@ -80,7 +80,7 @@ function Nav({ pathname, onNavigate }: { pathname: string; onNavigate?: () => vo
         return (
           <Link
             key={it.to}
-            to={it.to}
+            to={it.to as never}
             onClick={onNavigate}
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-colors",
