@@ -9,38 +9,65 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MontadorRouteImport } from './routes/montador'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SServicoCidadeRouteImport } from './routes/s.$servico.$cidade'
 
+const MontadorRoute = MontadorRouteImport.update({
+  id: '/montador',
+  path: '/montador',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SServicoCidadeRoute = SServicoCidadeRouteImport.update({
+  id: '/s/$servico/$cidade',
+  path: '/s/$servico/$cidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/montador': typeof MontadorRoute
+  '/s/$servico/$cidade': typeof SServicoCidadeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/montador': typeof MontadorRoute
+  '/s/$servico/$cidade': typeof SServicoCidadeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/montador': typeof MontadorRoute
+  '/s/$servico/$cidade': typeof SServicoCidadeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/montador' | '/s/$servico/$cidade'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/montador' | '/s/$servico/$cidade'
+  id: '__root__' | '/' | '/montador' | '/s/$servico/$cidade'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MontadorRoute: typeof MontadorRoute
+  SServicoCidadeRoute: typeof SServicoCidadeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/montador': {
+      id: '/montador'
+      path: '/montador'
+      fullPath: '/montador'
+      preLoaderRoute: typeof MontadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/s/$servico/$cidade': {
+      id: '/s/$servico/$cidade'
+      path: '/s/$servico/$cidade'
+      fullPath: '/s/$servico/$cidade'
+      preLoaderRoute: typeof SServicoCidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MontadorRoute: MontadorRoute,
+  SServicoCidadeRoute: SServicoCidadeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
