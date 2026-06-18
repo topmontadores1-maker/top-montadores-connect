@@ -12,7 +12,17 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as MontadorRouteImport } from './routes/montador'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminServicosRouteImport } from './routes/admin.servicos'
+import { Route as AdminRelatoriosRouteImport } from './routes/admin.relatorios'
+import { Route as AdminMontadoresRouteImport } from './routes/admin.montadores'
+import { Route as AdminLinksRouteImport } from './routes/admin.links'
+import { Route as AdminImportacoesRouteImport } from './routes/admin.importacoes'
+import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
+import { Route as AdminCidadesRouteImport } from './routes/admin.cidades'
+import { Route as AdminAuditoriaRouteImport } from './routes/admin.auditoria'
 import { Route as SServicoCidadeRouteImport } from './routes/s.$servico.$cidade'
+import { Route as AdminMontadoresIdRouteImport } from './routes/admin.montadores.$id'
 
 const MontadorRoute = MontadorRouteImport.update({
   id: '/montador',
@@ -29,42 +39,163 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminServicosRoute = AdminServicosRouteImport.update({
+  id: '/servicos',
+  path: '/servicos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRelatoriosRoute = AdminRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMontadoresRoute = AdminMontadoresRouteImport.update({
+  id: '/montadores',
+  path: '/montadores',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLinksRoute = AdminLinksRouteImport.update({
+  id: '/links',
+  path: '/links',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminImportacoesRoute = AdminImportacoesRouteImport.update({
+  id: '/importacoes',
+  path: '/importacoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCidadesRoute = AdminCidadesRouteImport.update({
+  id: '/cidades',
+  path: '/cidades',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditoriaRoute = AdminAuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
+  getParentRoute: () => AdminRoute,
+} as any)
 const SServicoCidadeRoute = SServicoCidadeRouteImport.update({
   id: '/s/$servico/$cidade',
   path: '/s/$servico/$cidade',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminMontadoresIdRoute = AdminMontadoresIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminMontadoresRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/montador': typeof MontadorRoute
+  '/admin/auditoria': typeof AdminAuditoriaRoute
+  '/admin/cidades': typeof AdminCidadesRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/importacoes': typeof AdminImportacoesRoute
+  '/admin/links': typeof AdminLinksRoute
+  '/admin/montadores': typeof AdminMontadoresRouteWithChildren
+  '/admin/relatorios': typeof AdminRelatoriosRoute
+  '/admin/servicos': typeof AdminServicosRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/montadores/$id': typeof AdminMontadoresIdRoute
   '/s/$servico/$cidade': typeof SServicoCidadeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/montador': typeof MontadorRoute
+  '/admin/auditoria': typeof AdminAuditoriaRoute
+  '/admin/cidades': typeof AdminCidadesRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/importacoes': typeof AdminImportacoesRoute
+  '/admin/links': typeof AdminLinksRoute
+  '/admin/montadores': typeof AdminMontadoresRouteWithChildren
+  '/admin/relatorios': typeof AdminRelatoriosRoute
+  '/admin/servicos': typeof AdminServicosRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/montadores/$id': typeof AdminMontadoresIdRoute
   '/s/$servico/$cidade': typeof SServicoCidadeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/montador': typeof MontadorRoute
+  '/admin/auditoria': typeof AdminAuditoriaRoute
+  '/admin/cidades': typeof AdminCidadesRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/importacoes': typeof AdminImportacoesRoute
+  '/admin/links': typeof AdminLinksRoute
+  '/admin/montadores': typeof AdminMontadoresRouteWithChildren
+  '/admin/relatorios': typeof AdminRelatoriosRoute
+  '/admin/servicos': typeof AdminServicosRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/montadores/$id': typeof AdminMontadoresIdRoute
   '/s/$servico/$cidade': typeof SServicoCidadeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/montador' | '/s/$servico/$cidade'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/montador'
+    | '/admin/auditoria'
+    | '/admin/cidades'
+    | '/admin/configuracoes'
+    | '/admin/importacoes'
+    | '/admin/links'
+    | '/admin/montadores'
+    | '/admin/relatorios'
+    | '/admin/servicos'
+    | '/admin/'
+    | '/admin/montadores/$id'
+    | '/s/$servico/$cidade'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/montador' | '/s/$servico/$cidade'
-  id: '__root__' | '/' | '/admin' | '/montador' | '/s/$servico/$cidade'
+  to:
+    | '/'
+    | '/montador'
+    | '/admin/auditoria'
+    | '/admin/cidades'
+    | '/admin/configuracoes'
+    | '/admin/importacoes'
+    | '/admin/links'
+    | '/admin/montadores'
+    | '/admin/relatorios'
+    | '/admin/servicos'
+    | '/admin'
+    | '/admin/montadores/$id'
+    | '/s/$servico/$cidade'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/montador'
+    | '/admin/auditoria'
+    | '/admin/cidades'
+    | '/admin/configuracoes'
+    | '/admin/importacoes'
+    | '/admin/links'
+    | '/admin/montadores'
+    | '/admin/relatorios'
+    | '/admin/servicos'
+    | '/admin/'
+    | '/admin/montadores/$id'
+    | '/s/$servico/$cidade'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   MontadorRoute: typeof MontadorRoute
   SServicoCidadeRoute: typeof SServicoCidadeRoute
 }
@@ -92,6 +223,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/servicos': {
+      id: '/admin/servicos'
+      path: '/servicos'
+      fullPath: '/admin/servicos'
+      preLoaderRoute: typeof AdminServicosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/relatorios': {
+      id: '/admin/relatorios'
+      path: '/relatorios'
+      fullPath: '/admin/relatorios'
+      preLoaderRoute: typeof AdminRelatoriosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/montadores': {
+      id: '/admin/montadores'
+      path: '/montadores'
+      fullPath: '/admin/montadores'
+      preLoaderRoute: typeof AdminMontadoresRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/links': {
+      id: '/admin/links'
+      path: '/links'
+      fullPath: '/admin/links'
+      preLoaderRoute: typeof AdminLinksRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/importacoes': {
+      id: '/admin/importacoes'
+      path: '/importacoes'
+      fullPath: '/admin/importacoes'
+      preLoaderRoute: typeof AdminImportacoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/configuracoes': {
+      id: '/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AdminConfiguracoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/cidades': {
+      id: '/admin/cidades'
+      path: '/cidades'
+      fullPath: '/admin/cidades'
+      preLoaderRoute: typeof AdminCidadesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/auditoria': {
+      id: '/admin/auditoria'
+      path: '/auditoria'
+      fullPath: '/admin/auditoria'
+      preLoaderRoute: typeof AdminAuditoriaRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/s/$servico/$cidade': {
       id: '/s/$servico/$cidade'
       path: '/s/$servico/$cidade'
@@ -99,12 +293,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SServicoCidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/montadores/$id': {
+      id: '/admin/montadores/$id'
+      path: '/$id'
+      fullPath: '/admin/montadores/$id'
+      preLoaderRoute: typeof AdminMontadoresIdRouteImport
+      parentRoute: typeof AdminMontadoresRoute
+    }
   }
 }
 
+interface AdminMontadoresRouteChildren {
+  AdminMontadoresIdRoute: typeof AdminMontadoresIdRoute
+}
+
+const AdminMontadoresRouteChildren: AdminMontadoresRouteChildren = {
+  AdminMontadoresIdRoute: AdminMontadoresIdRoute,
+}
+
+const AdminMontadoresRouteWithChildren = AdminMontadoresRoute._addFileChildren(
+  AdminMontadoresRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminAuditoriaRoute: typeof AdminAuditoriaRoute
+  AdminCidadesRoute: typeof AdminCidadesRoute
+  AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
+  AdminImportacoesRoute: typeof AdminImportacoesRoute
+  AdminLinksRoute: typeof AdminLinksRoute
+  AdminMontadoresRoute: typeof AdminMontadoresRouteWithChildren
+  AdminRelatoriosRoute: typeof AdminRelatoriosRoute
+  AdminServicosRoute: typeof AdminServicosRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAuditoriaRoute: AdminAuditoriaRoute,
+  AdminCidadesRoute: AdminCidadesRoute,
+  AdminConfiguracoesRoute: AdminConfiguracoesRoute,
+  AdminImportacoesRoute: AdminImportacoesRoute,
+  AdminLinksRoute: AdminLinksRoute,
+  AdminMontadoresRoute: AdminMontadoresRouteWithChildren,
+  AdminRelatoriosRoute: AdminRelatoriosRoute,
+  AdminServicosRoute: AdminServicosRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   MontadorRoute: MontadorRoute,
   SServicoCidadeRoute: SServicoCidadeRoute,
 }
