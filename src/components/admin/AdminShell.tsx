@@ -7,7 +7,8 @@ import {
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 
-const items = [
+type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; exact?: boolean };
+const items: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/montadores", label: "Montadores", icon: Users },
   { to: "/admin/links", label: "Links e Cobertura", icon: Link2 },
@@ -17,7 +18,7 @@ const items = [
   { to: "/admin/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/admin/configuracoes", label: "Configurações", icon: Settings },
   { to: "/admin/auditoria", label: "Auditoria", icon: ScrollText },
-] as const;
+];
 
 export function AdminShell() {
   const [open, setOpen] = useState(false);

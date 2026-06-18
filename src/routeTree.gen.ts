@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MontadorRouteImport } from './routes/montador'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SServicoCidadeRouteImport } from './routes/s.$servico.$cidade'
 
 const MontadorRoute = MontadorRouteImport.update({
   id: '/montador',
   path: '/montador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,30 +37,34 @@ const SServicoCidadeRoute = SServicoCidadeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/montador': typeof MontadorRoute
   '/s/$servico/$cidade': typeof SServicoCidadeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/montador': typeof MontadorRoute
   '/s/$servico/$cidade': typeof SServicoCidadeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/montador': typeof MontadorRoute
   '/s/$servico/$cidade': typeof SServicoCidadeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/montador' | '/s/$servico/$cidade'
+  fullPaths: '/' | '/admin' | '/montador' | '/s/$servico/$cidade'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/montador' | '/s/$servico/$cidade'
-  id: '__root__' | '/' | '/montador' | '/s/$servico/$cidade'
+  to: '/' | '/admin' | '/montador' | '/s/$servico/$cidade'
+  id: '__root__' | '/' | '/admin' | '/montador' | '/s/$servico/$cidade'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   MontadorRoute: typeof MontadorRoute
   SServicoCidadeRoute: typeof SServicoCidadeRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/montador'
       fullPath: '/montador'
       preLoaderRoute: typeof MontadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   MontadorRoute: MontadorRoute,
   SServicoCidadeRoute: SServicoCidadeRoute,
 }
