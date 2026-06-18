@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MontadorRouteImport } from './routes/montador'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -27,6 +28,11 @@ import { Route as AdminMontadoresIdRouteImport } from './routes/admin.montadores
 const MontadorRoute = MontadorRouteImport.update({
   id: '/montador',
   path: '/montador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -98,6 +104,7 @@ const AdminMontadoresIdRoute = AdminMontadoresIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/login': typeof LoginRoute
   '/montador': typeof MontadorRoute
   '/admin/auditoria': typeof AdminAuditoriaRoute
   '/admin/cidades': typeof AdminCidadesRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/montador': typeof MontadorRoute
   '/admin/auditoria': typeof AdminAuditoriaRoute
   '/admin/cidades': typeof AdminCidadesRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/login': typeof LoginRoute
   '/montador': typeof MontadorRoute
   '/admin/auditoria': typeof AdminAuditoriaRoute
   '/admin/cidades': typeof AdminCidadesRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/login'
     | '/montador'
     | '/admin/auditoria'
     | '/admin/cidades'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/montador'
     | '/admin/auditoria'
     | '/admin/cidades'
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/login'
     | '/montador'
     | '/admin/auditoria'
     | '/admin/cidades'
@@ -196,6 +208,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  LoginRoute: typeof LoginRoute
   MontadorRoute: typeof MontadorRoute
   SServicoCidadeRoute: typeof SServicoCidadeRoute
 }
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/montador'
       fullPath: '/montador'
       preLoaderRoute: typeof MontadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -344,6 +364,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  LoginRoute: LoginRoute,
   MontadorRoute: MontadorRoute,
   SServicoCidadeRoute: SServicoCidadeRoute,
 }
