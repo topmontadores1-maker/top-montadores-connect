@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Users, MapPin, Link2, MessageCircle, Upload, AlertTriangle } from "lucide-react";
-import { dashboardStats, clicksSeries, stateBars, auditLog } from "@/mocks/data";
+import { dashboardStats, clicksSeries, stateBars } from "@/mocks/data";
+import { useStore } from "@/mocks/store";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/admin/")({
 });
 
 function Dashboard() {
+  const auditLog = useStore((s) => s.audit.slice(0, 8));
   const cards = [
     { label: "Montadores", value: dashboardStats.totalProfessionals, icon: Users },
     { label: "Cidades cobertas", value: dashboardStats.citiesCovered, icon: MapPin },
