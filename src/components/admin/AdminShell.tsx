@@ -1,11 +1,21 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, Link2, Wrench, Upload, MapPin,
-  BarChart3, Settings, ScrollText, Menu, X, ArrowLeft,
+  BarChart3, Settings, ScrollText, Menu, X, ArrowLeft, LogOut,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/mocks/auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; exact?: boolean };
 const items: NavItem[] = [
@@ -23,6 +33,23 @@ const items: NavItem[] = [
 export function AdminShell() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const user = useAuth((s) => s.user);
+  const logout = useAuth((s) => s.logout);
+
+  useEffect(() => {
+    if (!user) {
+      navigate({ to: "/login", search: { redirect: pathname }, replace: true });
+    }
+  }, [user, navigate, pathname]);
+
+  function handleLogout() {
+    logout();
+    toast.success("Sessão encerrada.");
+    navigate({ to: "/login", replace: true });
+  }
+
+  if (!user) return null;
 
   return (
     <div className="flex min-h-screen bg-muted/30">
@@ -62,7 +89,30 @@ export function AdminShell() {
           <div className="flex-1 text-sm font-semibold text-muted-foreground">
             Painel administrativo
           </div>
-          <div className="hidden h-8 w-8 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground sm:grid">A</div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-full pl-2 pr-3 py-1 text-sm font-semibold hover:bg-muted"
+                aria-label="Menu da conta"
+              >
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="hidden sm:inline">{user.name}</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="font-semibold">{user.name}</div>
+                <div className="text-xs font-normal text-muted-foreground">{user.email}</div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                <LogOut className="h-4 w-4" /> Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
         <main className="min-w-0 flex-1 p-4 md:p-8">
           <Outlet />
