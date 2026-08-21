@@ -1,10 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Users, MapPin, Link2, MessageCircle, Upload, AlertTriangle } from "lucide-react";
-import { dashboardStats, clicksSeries, stateBars } from "@/mocks/data";
-import { useStore } from "@/mocks/store";
+import { useEffect, useState } from "react";
+import {
+  getAdminAnalytics,
+  getDashboardStats,
+  getAuditLogs,
+  type AdminAnalytics,
+  type DashboardStats,
+} from "@/lib/supabase-queries";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({ meta: [{ title: "Dashboard — Admin" }] }),
@@ -12,15 +19,63 @@ export const Route = createFileRoute("/admin/")({
 });
 
 function Dashboard() {
-  const auditLog = useStore((s) => s.audit.slice(0, 8));
+  const [stats, setStats] = useState<DashboardStats>({
+    totalProfessionals: 0,
+    totalLinks: 0,
+    totalCities: 0,
+    pendingProfessionals: 0,
+    totalClicks: 0,
+    totalServices: 0,
+  });
+  const [analytics, setAnalytics] = useState<AdminAnalytics>({
+    clicksByService: [],
+    linksByState: [],
+    searchedCitiesByService: [],
+  });
+  const [auditLog, setAuditLog] = useState<Array<{ id: string; at: string; who: string; what: string; target: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([getDashboardStats(), getAuditLogs(8), getAdminAnalytics()])
+      .then(([dbStats, logs, analyticsData]) => {
+        setStats(dbStats);
+        setAnalytics(analyticsData);
+        const converted = logs.map((log) => ({
+          id: log.id,
+          at: new Date(log.created_at).toLocaleString("pt-BR"),
+          who: log.user_id || "Sistema",
+          what: log.action,
+          target: log.target,
+        }));
+        setAuditLog(converted);
+      })
+      .catch((error) => {
+        console.error("Error loading dashboard:", error);
+        toast.error("Erro ao carregar o dashboard.");
+      })
+      .finally(() => setLoading(false));
+  }, []);
   const cards = [
-    { label: "Montadores", value: dashboardStats.totalProfessionals, icon: Users },
-    { label: "Cidades cobertas", value: dashboardStats.citiesCovered, icon: MapPin },
-    { label: "Links ativos", value: dashboardStats.activeLinks, icon: Link2 },
-    { label: "Cliques no WhatsApp (7d)", value: dashboardStats.whatsappClicks7d.toLocaleString("pt-BR"), icon: MessageCircle },
-    { label: "Importações no mês", value: dashboardStats.importsThisMonth, icon: Upload },
-    { label: "Pendências", value: dashboardStats.pending, icon: AlertTriangle },
+    { label: "Montadores", value: stats.totalProfessionals, icon: Users },
+    { label: "Cidades cobertas", value: stats.totalCities, icon: MapPin },
+    { label: "Links ativos", value: stats.totalLinks, icon: Link2 },
+    { label: "Cliques acumulados", value: stats.totalClicks.toLocaleString("pt-BR"), icon: MessageCircle },
+    { label: "Serviços", value: stats.totalServices, icon: Upload },
+    { label: "Pendências", value: stats.pendingProfessionals, icon: AlertTriangle },
   ];
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-8 w-48 animate-pulse rounded bg-muted"></div>
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-20 animate-pulse rounded bg-muted"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
@@ -48,11 +103,11 @@ function Dashboard() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Cliques no WhatsApp (7 dias)">
+        <ChartCard title="Cliques por serviço">
           <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={clicksSeries}>
+            <LineChart data={analytics.clicksByService}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 0% / 0.06)" />
-              <XAxis dataKey="day" stroke="currentColor" fontSize={12} />
+              <XAxis dataKey="service" stroke="currentColor" fontSize={12} />
               <YAxis stroke="currentColor" fontSize={12} />
               <Tooltip />
               <Line type="monotone" dataKey="clicks" stroke="var(--primary)" strokeWidth={3} dot={{ r: 4 }} />
@@ -61,7 +116,7 @@ function Dashboard() {
         </ChartCard>
         <ChartCard title="Links por estado">
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={stateBars}>
+            <BarChart data={analytics.linksByState}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 0% / 0.06)" />
               <XAxis dataKey="state" stroke="currentColor" fontSize={12} />
               <YAxis stroke="currentColor" fontSize={12} />
@@ -72,12 +127,38 @@ function Dashboard() {
         </ChartCard>
       </div>
 
+      <ChartCard title="Cidades mais pesquisadas por serviço">
+        {analytics.searchedCitiesByService.length > 0 ? (
+          <div className="divide-y divide-border">
+            {analytics.searchedCitiesByService.map((item) => (
+              <div
+                key={`${item.service_slug}-${item.city_slug}`}
+                className="grid gap-3 py-3 text-sm sm:grid-cols-[1fr_1fr_auto] sm:items-center"
+              >
+                <div>
+                  <div className="font-semibold">{item.service_name}</div>
+                  <div className="text-xs text-muted-foreground">#{item.rank} no serviço</div>
+                </div>
+                <div className="text-muted-foreground">
+                  {item.city}, {item.state}
+                </div>
+                <div className="font-bold text-primary">
+                  {item.searches.toLocaleString("pt-BR")} busca(s)
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="py-6 text-sm text-muted-foreground">Nenhuma busca registrada.</p>
+        )}
+      </ChartCard>
+
       <div className="rounded-xl border border-border bg-card">
         <header className="border-b border-border p-4">
           <h2 className="font-bold">Últimas atividades</h2>
         </header>
         <ul className="divide-y divide-border">
-          {auditLog.map((a) => (
+          {auditLog.slice(0, 8).map((a) => (
             <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 p-4 text-sm">
               <div>
                 <div className="font-semibold">{a.what}</div>

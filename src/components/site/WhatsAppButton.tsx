@@ -7,12 +7,14 @@ export function WhatsAppButton({
   className,
   size = "lg",
   label = "Chamar no WhatsApp",
+  onClick,
 }: {
   phone: string;
   message?: string;
   className?: string;
   size?: "md" | "lg";
   label?: string;
+  onClick?: () => void;
 }) {
   const href = `https://wa.me/${phone.replace(/\D/g, "")}${
     message ? `?text=${encodeURIComponent(message)}` : ""
@@ -22,6 +24,7 @@ export function WhatsAppButton({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={onClick}
       className={cn(
         "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-whatsapp font-bold text-whatsapp-foreground shadow-md transition-all hover:brightness-110 active:scale-[0.99]",
         size === "lg" ? "h-14 px-6 text-base" : "h-11 px-4 text-sm",

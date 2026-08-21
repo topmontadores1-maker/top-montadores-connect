@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { Professional } from "@/mocks/data";
+import type { Professional } from "@/integrations/supabase/database.types";
 
 export function StatusBadge({ status }: { status: Professional["status"] }) {
   const map: Record<Professional["status"], string> = {

@@ -1,26 +1,63 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
+import { TestimonialsSection } from "@/components/site/TestimonialsSection";
+import { PixelHero } from "@/components/ui/pixel-perfect-hero";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { services } from "@/mocks/data";
+import { SearchableCombobox } from "@/components/ui/searchable-combobox";
 import {
-  Search, MapPin, ShieldCheck, Zap, Users, Star,
-  Tv, Hammer, DoorClosed, ChefHat, Blinds, LayoutGrid,
-  Baby, Briefcase, Wind, Monitor, Store, Wrench,
+  getPublicCities,
+  getPublicServices,
+  recordPublicSearchQuery,
+} from "@/lib/supabase-queries";
+import { BRAZIL_STATES, getCitiesByState, type BrazilCity } from "@/lib/brazil-localities";
+import type { PublicService } from "@/integrations/supabase/database.types";
+import {
+  Search,
+  MapPin,
+  ShieldCheck,
+  Zap,
+  Users,
+  Tv,
+  Hammer,
+  DoorClosed,
+  ChefHat,
+  Blinds,
+  LayoutGrid,
+  Baby,
+  Briefcase,
+  Wind,
+  Monitor,
+  Store,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  Tv, Hammer, DoorClosed, ChefHat, Blinds, LayoutGrid, Baby, Briefcase, Wind, Monitor, Store, Wrench,
+  Tv,
+  Hammer,
+  DoorClosed,
+  ChefHat,
+  Blinds,
+  LayoutGrid,
+  Baby,
+  Briefcase,
+  Wind,
+  Monitor,
+  Store,
+  Wrench,
 };
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Top Montadores — Encontre um montador perto de você" },
-      { name: "description", content: "Diretório nacional de montadores de móveis e serviços de instalação. Atendimento direto via WhatsApp." },
+      {
+        name: "description",
+        content:
+          "Encontre profissionais para montagem de móveis e serviços de instalação. Atendimento direto via WhatsApp.",
+      },
       { property: "og:title", content: "Top Montadores" },
       { property: "og:description", content: "Encontre um montador perto de você." },
     ],
@@ -30,131 +67,227 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const navigate = useNavigate();
-  const [service, setService] = useState("");
-  const [city, setCity] = useState("");
+  const [serviceSlug, setServiceSlug] = useState("");
+  const [state, setState] = useState("");
+  const [citySlug, setCitySlug] = useState("");
+  const [services, setServices] = useState<PublicService[]>([]);
+  const [cityOptions, setCityOptions] = useState<BrazilCity[]>([]);
+  const [coveredCitiesCount, setCoveredCitiesCount] = useState(0);
+  const [loadingCities, setLoadingCities] = useState(false);
 
-  function search(e: React.FormEvent) {
+  useEffect(() => {
+    Promise.all([getPublicServices(), getPublicCities()])
+      .then(([serviceRows, cityRows]) => {
+        setServices(serviceRows);
+        setCoveredCitiesCount(cityRows.length);
+      })
+      .catch((error) => {
+        console.error("Error loading public directory:", error);
+        toast.error("Erro ao carregar o diretório.");
+      });
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    setCitySlug("");
+    setCityOptions([]);
+
+    if (!state) return;
+
+    setLoadingCities(true);
+    getCitiesByState(state)
+      .then((rows) => {
+        if (!ignore) setCityOptions(rows);
+      })
+      .catch((error) => {
+        console.error("Error loading cities:", error);
+        if (!ignore) toast.error("Erro ao carregar cidades do estado.");
+      })
+      .finally(() => {
+        if (!ignore) setLoadingCities(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [state]);
+
+  async function search(e: React.FormEvent) {
     e.preventDefault();
-    if (!service || !city) {
-      toast.error("Informe o serviço e a cidade.");
+    const matchedService = services.find((item) => item.slug === serviceSlug);
+    const matchedCity = cityOptions.find((item) => item.slug === citySlug);
+
+    if (!matchedService || !state || !matchedCity) {
+      toast.error("Informe o serviço, estado e cidade.");
       return;
     }
-    const slugify = (s: string) =>
-      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+    recordPublicSearchQuery({
+      service_slug: matchedService.slug,
+      service_name: matchedService.name,
+      city: matchedCity.name,
+      state: matchedCity.state,
+      city_slug: matchedCity.slug,
+    }).catch((error) => {
+      console.error("Error recording public search query:", error);
+    });
+
     navigate({
       to: "/s/$servico/$cidade",
-      params: { servico: slugify(service), cidade: slugify(city) },
+      params: { servico: matchedService.slug, cidade: matchedCity.slug },
     });
   }
 
-  function useLocation() {
-    toast("Localização", { description: "Detectando sua cidade aproximada…" });
-    setTimeout(() => setCity("Balneário Camboriú SC"), 600);
+  function chooseService(selectedService: PublicService) {
+    setServiceSlug(selectedService.slug);
+    document
+      .getElementById("public-search")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
+
+  const serviceOptions = services.map((item) => ({
+    value: item.slug,
+    label: item.name,
+    search: item.description ?? "",
+  }));
+  const stateOptions = BRAZIL_STATES.map((item) => ({
+    value: item.uf,
+    label: item.name,
+    description: item.uf,
+  }));
+  const cityComboboxOptions = cityOptions.map((item) => ({
+    value: item.slug,
+    label: item.name,
+    description: item.state,
+    search: item.ibgeCode,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* HERO */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary to-secondary text-primary-foreground">
-        <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_20%_10%,white,transparent_40%),radial-gradient(circle_at_80%_90%,white,transparent_45%)]" />
-        <div className="container relative mx-auto px-4 py-20 md:py-28">
-          <div className="mx-auto max-w-3xl text-center">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider ring-1 ring-white/20">
-              <Star className="h-3.5 w-3.5" /> Diretório nacional
-            </span>
-            <h1 className="mt-5 text-4xl font-black leading-tight md:text-6xl">
-              Encontre um montador perto de você
-            </h1>
-            <p className="mt-4 text-base text-primary-foreground/80 md:text-lg">
-              Atendimento direto via WhatsApp, sem cadastro e sem espera.
-            </p>
-
-            <form
-              onSubmit={search}
-              className="mx-auto mt-10 grid gap-3 rounded-2xl bg-card p-4 text-foreground shadow-2xl md:grid-cols-[1.2fr_1fr_auto]"
-            >
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                  placeholder="Qual serviço você precisa?"
-                  className="h-12 pl-9 text-base"
-                  aria-label="Serviço"
-                />
-              </div>
-              <div className="relative">
-                <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="Cidade ou estado"
-                  className="h-12 pl-9 text-base"
-                  aria-label="Cidade ou estado"
-                />
-              </div>
-              <Button type="submit" size="lg" className="h-12 px-6 text-base font-bold">
-                Buscar montador
-              </Button>
-              <div className="md:col-span-3">
-                <button
-                  type="button"
-                  onClick={useLocation}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
-                >
-                  <MapPin className="h-4 w-4" /> Usar minha localização
-                </button>
-              </div>
-            </form>
+      <PixelHero
+        eyebrow="Profissional montador"
+        title="Montagem e desmontagem de móveis"
+        accent="perto de você"
+        description={
+          <>
+            Precisa de ajuda com a sua mobília? Encontre profissionais disponíveis na sua cidade e
+            fale diretamente pelo WhatsApp.
+          </>
+        }
+        imageSrc="/brand/profissional.png"
+        imageAlt="Profissional montador com ferramentas"
+      >
+        <form
+          id="public-search"
+          onSubmit={search}
+          className="grid w-full min-w-0 max-w-3xl gap-3 rounded-2xl border border-white/25 bg-white/95 p-3 text-foreground shadow-[0_24px_60px_rgba(1,16,40,0.32)] backdrop-blur md:grid-cols-2 md:p-4"
+        >
+          <SearchableCombobox
+            value={serviceSlug}
+            options={serviceOptions}
+            onValueChange={setServiceSlug}
+            placeholder="Serviço"
+            searchPlaceholder="Pesquisar serviço"
+            emptyText="Nenhum serviço encontrado."
+            icon={Search}
+          />
+          <SearchableCombobox
+            value={state}
+            options={stateOptions}
+            onValueChange={setState}
+            placeholder="Estado"
+            searchPlaceholder="Pesquisar estado"
+            emptyText="Nenhum estado encontrado."
+            icon={MapPin}
+          />
+          <SearchableCombobox
+            value={citySlug}
+            options={cityComboboxOptions}
+            onValueChange={setCitySlug}
+            placeholder={
+              state ? (loadingCities ? "Carregando cidades..." : "Cidade") : "Selecione o estado"
+            }
+            searchPlaceholder="Pesquisar cidade"
+            emptyText="Nenhuma cidade encontrada."
+            disabled={!state || loadingCities}
+            icon={MapPin}
+          />
+          <Button
+            type="submit"
+            size="lg"
+            disabled={loadingCities}
+            className="h-12 w-full min-w-0 px-4 text-base font-bold"
+          >
+            Buscar montador
+          </Button>
+          <div className="min-w-0 break-words text-left text-xs text-muted-foreground md:col-span-2">
+            {state
+              ? loadingCities
+                ? "Carregando cidades..."
+                : `${cityOptions.length} cidade(s) carregada(s) em ${state}`
+              : `${coveredCitiesCount} cidade(s) com profissionais cadastrados`}
           </div>
-        </div>
-      </section>
+        </form>
+      </PixelHero>
 
       {/* SERVIÇOS */}
       <section id="servicos" className="container mx-auto px-4 py-16">
         <div className="mb-8 flex items-end justify-between">
           <div>
             <h2 className="text-2xl font-black md:text-3xl">Tipos de serviço</h2>
-            <p className="text-muted-foreground">Escolha um serviço para ver o profissional responsável na sua cidade.</p>
+            <p className="text-muted-foreground">
+              Escolha um serviço para ver os profissionais disponíveis na sua cidade.
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {services.map((s) => {
             const Icon = ICON_MAP[s.icon] ?? Wrench;
             return (
-              <Link
+              <button
+                type="button"
                 key={s.slug}
-                to="/s/$servico/$cidade"
-                params={{ servico: s.slug, cidade: "balneario-camboriu-sc" }}
-                className="group flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+                onClick={() => chooseService(s)}
+                className="group flex min-w-0 flex-col items-start gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
               >
                 <span className="grid h-10 w-10 place-items-center rounded-lg bg-accent text-primary group-hover:bg-primary group-hover:text-primary-foreground">
                   <Icon className="h-5 w-5" />
                 </span>
-                <span className="text-sm font-bold">{s.name}</span>
-              </Link>
+                <span className="max-w-full break-words text-left text-sm font-bold">{s.name}</span>
+              </button>
             );
           })}
         </div>
       </section>
 
+      <TestimonialsSection />
+
       {/* CONFIANÇA */}
       <section id="confianca" className="bg-muted/40 py-16">
         <div className="container mx-auto px-4">
           <div className="grid gap-6 md:grid-cols-4">
-            <Trust icon={ShieldCheck} title="Profissionais verificados" desc="Curadoria manual e validação de identidade." />
-            <Trust icon={MapPin} title="Atendimento local" desc="Um responsável por cidade — sem intermediários." />
-            <Trust icon={Zap} title="Resposta rápida" desc="Conversa direta no WhatsApp do profissional." />
-            <Trust icon={Users} title="Cobertura nacional" desc="312 cidades atendidas em todo o Brasil." />
-          </div>
-          <div className="mt-10 grid grid-cols-2 gap-4 rounded-2xl border border-border bg-card p-6 md:grid-cols-4">
-            <Stat label="Montadores" value="184" />
-            <Stat label="Cidades" value="312" />
-            <Stat label="Atendimentos" value="42 mil" />
-            <Stat label="Avaliação média" value="4,9★" />
+            <Trust
+              icon={ShieldCheck}
+              title="Profissionais verificados"
+              desc="Curadoria manual e validação de identidade."
+            />
+            <Trust
+              icon={MapPin}
+              title="Atendimento local"
+              desc="Profissionais na sua região."
+            />
+            <Trust
+              icon={Zap}
+              title="Resposta rápida"
+              desc="Conversa direta no WhatsApp."
+            />
+            <Trust
+              icon={Users}
+              title="Cobertura cadastrada"
+              desc={`${coveredCitiesCount} cidade(s) com profissionais disponíveis.`}
+            />
           </div>
         </div>
       </section>
@@ -164,7 +297,15 @@ function Home() {
   );
 }
 
-function Trust({ icon: Icon, title, desc }: { icon: React.ComponentType<{ className?: string }>; title: string; desc: string }) {
+function Trust({
+  icon: Icon,
+  title,
+  desc,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc: string;
+}) {
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
@@ -172,15 +313,6 @@ function Trust({ icon: Icon, title, desc }: { icon: React.ComponentType<{ classN
       </span>
       <h3 className="mt-3 font-bold">{title}</h3>
       <p className="text-sm text-muted-foreground">{desc}</p>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="text-center">
-      <div className="text-2xl font-black text-primary md:text-3xl">{value}</div>
-      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
     </div>
   );
 }

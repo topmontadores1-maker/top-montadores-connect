@@ -3,18 +3,18 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
+import { ExternalLink, Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Logo } from "@/components/brand/Logo";
-import { useAuth, MOCK_AUTH_HINT } from "@/mocks/auth";
+import { useSupabaseAuth } from "@/integrations/supabase/auth-store";
 
 const schema = z.object({
   email: z.string().trim().email("E-mail inválido").max(255),
-  password: z.string().min(4, "Mínimo de 4 caracteres").max(120),
+  password: z.string().min(1, "Senha é obrigatória").max(120),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -32,8 +32,8 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const user = useAuth((s) => s.user);
-  const login = useAuth((s) => s.login);
+  const user = useSupabaseAuth((s) => s.user);
+  const login = useSupabaseAuth((s) => s.login);
   const search = useRouterState({ select: (s) => s.location.search }) as { redirect?: string };
   const [submitting, setSubmitting] = useState(false);
 
@@ -41,6 +41,11 @@ function LoginPage() {
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
   });
+
+  const defaultSanityStudioUrl = "https://top-montadores-cms.sanity.studio";
+  const sanityStudioHref =
+    import.meta.env.VITE_SANITY_STUDIO_URL ||
+    (import.meta.env.DEV ? "http://localhost:3340" : defaultSanityStudioUrl);
 
   useEffect(() => {
     if (user) navigate({ to: search?.redirect ?? "/admin", replace: true });
@@ -57,11 +62,6 @@ function LoginPage() {
     }
     toast.success("Bem-vindo de volta!");
     navigate({ to: search?.redirect ?? "/admin", replace: true });
-  }
-
-  function fillDemo() {
-    form.setValue("email", MOCK_AUTH_HINT.email);
-    form.setValue("password", MOCK_AUTH_HINT.password);
   }
 
   return (
@@ -151,23 +151,21 @@ function LoginPage() {
                     "Entrar"
                   )}
                 </Button>
+
+                <Button type="button" variant="outline" className="w-full" asChild>
+                  <a href={sanityStudioHref} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Acessar Sanity Studio
+                  </a>
+                </Button>
               </form>
             </Form>
 
             <div className="mt-6 rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-              <p className="font-semibold text-foreground">Ambiente de demonstração</p>
+              <p className="font-semibold text-foreground">Acesso Administrativo</p>
               <p className="mt-1">
-                E-mail: <span className="font-mono">{MOCK_AUTH_HINT.email}</span>
-                <br />
-                Senha: <span className="font-mono">{MOCK_AUTH_HINT.password}</span>
+                Use sua conta de administrador configurada para acessar o painel.
               </p>
-              <button
-                type="button"
-                onClick={fillDemo}
-                className="mt-2 font-semibold text-primary hover:underline"
-              >
-                Preencher automaticamente
-              </button>
             </div>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">

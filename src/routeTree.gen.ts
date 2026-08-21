@@ -9,30 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as MontadorRouteImport } from './routes/montador'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MontadorRouteImport } from './routes/montador'
+import { Route as PoliticaDePrivacidadeRouteImport } from './routes/politica-de-privacidade'
+import { Route as PoliticasDeCookiesRouteImport } from './routes/politicas-de-cookies'
+import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as AdminServicosRouteImport } from './routes/admin.servicos'
-import { Route as AdminRelatoriosRouteImport } from './routes/admin.relatorios'
-import { Route as AdminMontadoresRouteImport } from './routes/admin.montadores'
-import { Route as AdminLinksRouteImport } from './routes/admin.links'
-import { Route as AdminImportacoesRouteImport } from './routes/admin.importacoes'
-import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
-import { Route as AdminCidadesRouteImport } from './routes/admin.cidades'
 import { Route as AdminAuditoriaRouteImport } from './routes/admin.auditoria'
-import { Route as SServicoCidadeRouteImport } from './routes/s.$servico.$cidade'
+import { Route as AdminCidadesRouteImport } from './routes/admin.cidades'
+import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
+import { Route as AdminImportacoesRouteImport } from './routes/admin.importacoes'
+import { Route as AdminLinksRouteImport } from './routes/admin.links'
+import { Route as AdminMontadoresRouteImport } from './routes/admin.montadores'
+import { Route as AdminRelatoriosRouteImport } from './routes/admin.relatorios'
+import { Route as AdminServicosRouteImport } from './routes/admin.servicos'
 import { Route as AdminMontadoresIdRouteImport } from './routes/admin.montadores.$id'
+import { Route as SServicoCidadeRouteImport } from './routes/s.$servico.$cidade'
 
-const MontadorRoute = MontadorRouteImport.update({
-  id: '/montador',
-  path: '/montador',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -40,9 +38,29 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MontadorRoute = MontadorRouteImport.update({
+  id: '/montador',
+  path: '/montador',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliticaDePrivacidadeRoute = PoliticaDePrivacidadeRouteImport.update({
+  id: '/politica-de-privacidade',
+  path: '/politica-de-privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliticasDeCookiesRoute = PoliticasDeCookiesRouteImport.update({
+  id: '/politicas-de-cookies',
+  path: '/politicas-de-cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
+  id: '/termos-de-uso',
+  path: '/termos-de-uso',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -50,34 +68,9 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminServicosRoute = AdminServicosRouteImport.update({
-  id: '/servicos',
-  path: '/servicos',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminRelatoriosRoute = AdminRelatoriosRouteImport.update({
-  id: '/relatorios',
-  path: '/relatorios',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminMontadoresRoute = AdminMontadoresRouteImport.update({
-  id: '/montadores',
-  path: '/montadores',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLinksRoute = AdminLinksRouteImport.update({
-  id: '/links',
-  path: '/links',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminImportacoesRoute = AdminImportacoesRouteImport.update({
-  id: '/importacoes',
-  path: '/importacoes',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
-  id: '/configuracoes',
-  path: '/configuracoes',
+const AdminAuditoriaRoute = AdminAuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCidadesRoute = AdminCidadesRouteImport.update({
@@ -85,20 +78,45 @@ const AdminCidadesRoute = AdminCidadesRouteImport.update({
   path: '/cidades',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAuditoriaRoute = AdminAuditoriaRouteImport.update({
-  id: '/auditoria',
-  path: '/auditoria',
+const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
   getParentRoute: () => AdminRoute,
 } as any)
-const SServicoCidadeRoute = SServicoCidadeRouteImport.update({
-  id: '/s/$servico/$cidade',
-  path: '/s/$servico/$cidade',
-  getParentRoute: () => rootRouteImport,
+const AdminImportacoesRoute = AdminImportacoesRouteImport.update({
+  id: '/importacoes',
+  path: '/importacoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLinksRoute = AdminLinksRouteImport.update({
+  id: '/links',
+  path: '/links',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMontadoresRoute = AdminMontadoresRouteImport.update({
+  id: '/montadores',
+  path: '/montadores',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRelatoriosRoute = AdminRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminServicosRoute = AdminServicosRouteImport.update({
+  id: '/servicos',
+  path: '/servicos',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminMontadoresIdRoute = AdminMontadoresIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AdminMontadoresRoute,
+} as any)
+const SServicoCidadeRoute = SServicoCidadeRouteImport.update({
+  id: '/s/$servico/$cidade',
+  path: '/s/$servico/$cidade',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -106,6 +124,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/montador': typeof MontadorRoute
+  '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
+  '/politicas-de-cookies': typeof PoliticasDeCookiesRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/auditoria': typeof AdminAuditoriaRoute
   '/admin/cidades': typeof AdminCidadesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
@@ -122,6 +143,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/montador': typeof MontadorRoute
+  '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
+  '/politicas-de-cookies': typeof PoliticasDeCookiesRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/auditoria': typeof AdminAuditoriaRoute
   '/admin/cidades': typeof AdminCidadesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
@@ -140,6 +164,9 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/montador': typeof MontadorRoute
+  '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
+  '/politicas-de-cookies': typeof PoliticasDeCookiesRoute
+  '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/auditoria': typeof AdminAuditoriaRoute
   '/admin/cidades': typeof AdminCidadesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
@@ -159,6 +186,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/montador'
+    | '/politica-de-privacidade'
+    | '/politicas-de-cookies'
+    | '/termos-de-uso'
     | '/admin/auditoria'
     | '/admin/cidades'
     | '/admin/configuracoes'
@@ -175,6 +205,9 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/montador'
+    | '/politica-de-privacidade'
+    | '/politicas-de-cookies'
+    | '/termos-de-uso'
     | '/admin/auditoria'
     | '/admin/cidades'
     | '/admin/configuracoes'
@@ -192,6 +225,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/montador'
+    | '/politica-de-privacidade'
+    | '/politicas-de-cookies'
+    | '/termos-de-uso'
     | '/admin/auditoria'
     | '/admin/cidades'
     | '/admin/configuracoes'
@@ -210,23 +246,19 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   MontadorRoute: typeof MontadorRoute
+  PoliticaDePrivacidadeRoute: typeof PoliticaDePrivacidadeRoute
+  PoliticasDeCookiesRoute: typeof PoliticasDeCookiesRoute
+  TermosDeUsoRoute: typeof TermosDeUsoRoute
   SServicoCidadeRoute: typeof SServicoCidadeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/montador': {
-      id: '/montador'
-      path: '/montador'
-      fullPath: '/montador'
-      preLoaderRoute: typeof MontadorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -236,11 +268,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/montador': {
+      id: '/montador'
+      path: '/montador'
+      fullPath: '/montador'
+      preLoaderRoute: typeof MontadorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politica-de-privacidade': {
+      id: '/politica-de-privacidade'
+      path: '/politica-de-privacidade'
+      fullPath: '/politica-de-privacidade'
+      preLoaderRoute: typeof PoliticaDePrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politicas-de-cookies': {
+      id: '/politicas-de-cookies'
+      path: '/politicas-de-cookies'
+      fullPath: '/politicas-de-cookies'
+      preLoaderRoute: typeof PoliticasDeCookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos-de-uso': {
+      id: '/termos-de-uso'
+      path: '/termos-de-uso'
+      fullPath: '/termos-de-uso'
+      preLoaderRoute: typeof TermosDeUsoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -250,46 +310,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/servicos': {
-      id: '/admin/servicos'
-      path: '/servicos'
-      fullPath: '/admin/servicos'
-      preLoaderRoute: typeof AdminServicosRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/relatorios': {
-      id: '/admin/relatorios'
-      path: '/relatorios'
-      fullPath: '/admin/relatorios'
-      preLoaderRoute: typeof AdminRelatoriosRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/montadores': {
-      id: '/admin/montadores'
-      path: '/montadores'
-      fullPath: '/admin/montadores'
-      preLoaderRoute: typeof AdminMontadoresRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/links': {
-      id: '/admin/links'
-      path: '/links'
-      fullPath: '/admin/links'
-      preLoaderRoute: typeof AdminLinksRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/importacoes': {
-      id: '/admin/importacoes'
-      path: '/importacoes'
-      fullPath: '/admin/importacoes'
-      preLoaderRoute: typeof AdminImportacoesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/configuracoes': {
-      id: '/admin/configuracoes'
-      path: '/configuracoes'
-      fullPath: '/admin/configuracoes'
-      preLoaderRoute: typeof AdminConfiguracoesRouteImport
+    '/admin/auditoria': {
+      id: '/admin/auditoria'
+      path: '/auditoria'
+      fullPath: '/admin/auditoria'
+      preLoaderRoute: typeof AdminAuditoriaRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/cidades': {
@@ -299,19 +324,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCidadesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/auditoria': {
-      id: '/admin/auditoria'
-      path: '/auditoria'
-      fullPath: '/admin/auditoria'
-      preLoaderRoute: typeof AdminAuditoriaRouteImport
+    '/admin/configuracoes': {
+      id: '/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AdminConfiguracoesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/s/$servico/$cidade': {
-      id: '/s/$servico/$cidade'
-      path: '/s/$servico/$cidade'
-      fullPath: '/s/$servico/$cidade'
-      preLoaderRoute: typeof SServicoCidadeRouteImport
-      parentRoute: typeof rootRouteImport
+    '/admin/importacoes': {
+      id: '/admin/importacoes'
+      path: '/importacoes'
+      fullPath: '/admin/importacoes'
+      preLoaderRoute: typeof AdminImportacoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/links': {
+      id: '/admin/links'
+      path: '/links'
+      fullPath: '/admin/links'
+      preLoaderRoute: typeof AdminLinksRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/montadores': {
+      id: '/admin/montadores'
+      path: '/montadores'
+      fullPath: '/admin/montadores'
+      preLoaderRoute: typeof AdminMontadoresRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/relatorios': {
+      id: '/admin/relatorios'
+      path: '/relatorios'
+      fullPath: '/admin/relatorios'
+      preLoaderRoute: typeof AdminRelatoriosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/servicos': {
+      id: '/admin/servicos'
+      path: '/servicos'
+      fullPath: '/admin/servicos'
+      preLoaderRoute: typeof AdminServicosRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/montadores/$id': {
       id: '/admin/montadores/$id'
@@ -319,6 +372,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/montadores/$id'
       preLoaderRoute: typeof AdminMontadoresIdRouteImport
       parentRoute: typeof AdminMontadoresRoute
+    }
+    '/s/$servico/$cidade': {
+      id: '/s/$servico/$cidade'
+      path: '/s/$servico/$cidade'
+      fullPath: '/s/$servico/$cidade'
+      preLoaderRoute: typeof SServicoCidadeRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -366,8 +426,21 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
   MontadorRoute: MontadorRoute,
+  PoliticaDePrivacidadeRoute: PoliticaDePrivacidadeRoute,
+  PoliticasDeCookiesRoute: PoliticasDeCookiesRoute,
+  TermosDeUsoRoute: TermosDeUsoRoute,
   SServicoCidadeRoute: SServicoCidadeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

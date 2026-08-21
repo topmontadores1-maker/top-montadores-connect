@@ -1,0 +1,21 @@
+node_modules
+dist
+dist-sanity
+.output
+.git
+.gitignore
+.sanity
+.codex*
+.codex-*
+.vscode
+.env
+.env.local
+*.log
+npm-debug.log*
+.DS_Store
+*.md
+  Sanity
+  cloudflared.compose.yml
+  excalidraw.compose.yml
+  Dockerfile.excalidraw
+  Dockerfile.excalidraw.dockerignore

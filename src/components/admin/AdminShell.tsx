@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/mocks/auth";
+import { useSupabaseAuth } from "@/integrations/supabase/auth-store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,17 +34,17 @@ export function AdminShell() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
-  const user = useAuth((s) => s.user);
-  const logout = useAuth((s) => s.logout);
+  const user = useSupabaseAuth((s) => s.user);
+  const logout = useSupabaseAuth((s) => s.logout);
 
   useEffect(() => {
     if (!user) {
       navigate({ to: "/login", search: { redirect: pathname }, replace: true });
     }
-  }, [user, navigate, pathname]);
+  }, [user, navigate]);
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     toast.success("Sessão encerrada.");
     navigate({ to: "/login", replace: true });
   }

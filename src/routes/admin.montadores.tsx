@@ -1,16 +1,39 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import type { Professional } from "@/mocks/data";
-import { services } from "@/mocks/data";
-import { useStore } from "@/mocks/store";
+import { useCallback, useMemo, useState, useEffect } from "react";
+import {
+  getProfessionals,
+  getPublicLinks,
+  getServices,
+  syncProfessionalPublicLinks,
+  updateProfessional,
+} from "@/lib/supabase-queries";
+import { auditActions } from "@/lib/audit";
+import type {
+  Professional,
+  ProfessionalPortfolioItem,
+  Service,
+} from "@/integrations/supabase/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Eye, Upload, PauseCircle, PlayCircle, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Pencil, Upload, PauseCircle, PlayCircle, X } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { MontadorFormDialog } from "@/components/admin/MontadorFormDialog";
@@ -22,13 +45,48 @@ export const Route = createFileRoute("/admin/montadores")({
   component: MontadoresList,
 });
 
+type AdminProfessional = Professional & {
+  services: string[];
+  linksCount: number;
+  portfolio: ProfessionalPortfolioItem[];
+};
+
 function MontadoresList() {
-  const professionals = useStore((s) => s.professionals);
+  const [professionals, setProfessionals] = useState<AdminProfessional[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
   const [state, setState] = useState("all");
   const [city, setCity] = useState("all");
   const [service, setService] = useState("all");
+
+  const loadProfessionals = useCallback(async () => {
+    const [profs, linkRows, serviceRows] = await Promise.all([
+      getProfessionals(),
+      getPublicLinks(),
+      getServices(),
+    ]);
+    const converted: AdminProfessional[] = profs.map((professional) => ({
+      ...professional,
+      services: professional.professional_services.map((item) => item.service_slug),
+      portfolio: professional.professional_portfolio_items,
+      linksCount: linkRows.filter(
+        (link) => link.professional_id === professional.id && link.status === "ativo",
+      ).length,
+    }));
+    setProfessionals(converted);
+    setServices(serviceRows);
+  }, []);
+
+  useEffect(() => {
+    loadProfessionals()
+      .catch((error) => {
+        console.error("Error loading professionals:", error);
+        toast.error("Erro ao carregar montadores.");
+      })
+      .finally(() => setLoading(false));
+  }, [loadProfessionals]);
 
   const states = Array.from(new Set(professionals.map((p) => p.state))).sort();
   const cities = Array.from(new Set(professionals.map((p) => p.city))).sort();
@@ -44,51 +102,102 @@ function MontadoresList() {
     });
   }, [professionals, q, status, state, city, service]);
 
-  const hasFilters = q || status !== "all" || state !== "all" || city !== "all" || service !== "all";
+  const hasFilters =
+    q || status !== "all" || state !== "all" || city !== "all" || service !== "all";
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-8 w-48 animate-pulse rounded bg-muted"></div>
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-10 animate-pulse rounded bg-muted"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black">Montadores</h1>
-          <p className="text-sm text-muted-foreground">{rows.length} de {professionals.length} profissionais</p>
+          <p className="text-sm text-muted-foreground">
+            {rows.length} de {professionals.length} profissionais
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" className="gap-2"><Link to="/admin/importacoes"><Upload className="h-4 w-4" /> Importar planilha</Link></Button>
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/admin/importacoes">
+              <Upload className="h-4 w-4" /> Importar planilha
+            </Link>
+          </Button>
           <GlobalUpdateModal />
           <ReplaceProfessionalModal />
-          <MontadorFormDialog />
+          <MontadorFormDialog
+            onSaved={() => {
+              void loadProfessionals();
+            }}
+          />
         </div>
       </header>
 
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3">
         <div className="relative min-w-[220px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nome ou WhatsApp" className="pl-9" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar por nome ou WhatsApp"
+            className="pl-9"
+          />
         </div>
         <Select value={city} onValueChange={setCity}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Cidade" /></SelectTrigger>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Cidade" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas cidades</SelectItem>
-            {cities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {cities.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={state} onValueChange={setState}>
-          <SelectTrigger className="w-[120px]"><SelectValue placeholder="Estado" /></SelectTrigger>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos UFs</SelectItem>
-            {states.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            {states.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={service} onValueChange={setService}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Serviço" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Serviço" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos serviços</SelectItem>
-            {services.map((s) => <SelectItem key={s.slug} value={s.slug}>{s.name}</SelectItem>)}
+            {services.map((s) => (
+              <SelectItem key={s.slug} value={s.slug}>
+                {s.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos status</SelectItem>
             <SelectItem value="ativo">Ativo</SelectItem>
@@ -97,7 +206,17 @@ function MontadoresList() {
           </SelectContent>
         </Select>
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={() => { setQ(""); setStatus("all"); setState("all"); setCity("all"); setService("all"); }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setQ("");
+              setStatus("all");
+              setState("all");
+              setCity("all");
+              setService("all");
+            }}
+          >
             <X className="mr-1 h-4 w-4" /> Limpar
           </Button>
         )}
@@ -117,9 +236,28 @@ function MontadoresList() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((p) => <Row key={p.id} p={p} />)}
+            {rows.map((p) => (
+              <Row
+                key={p.id}
+                p={p}
+                onStatusChange={(nextStatus) =>
+                  setProfessionals((current) =>
+                    current.map((item) =>
+                      item.id === p.id ? { ...item, status: nextStatus } : item,
+                    ),
+                  )
+                }
+                onSaved={() => {
+                  void loadProfessionals();
+                }}
+              />
+            ))}
             {rows.length === 0 && (
-              <tr><td colSpan={7} className="p-10 text-center text-muted-foreground">Nenhum montador encontrado com esses filtros.</td></tr>
+              <tr>
+                <td colSpan={7} className="p-10 text-center text-muted-foreground">
+                  Nenhum montador encontrado com esses filtros.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -127,12 +265,20 @@ function MontadoresList() {
 
       <div className="space-y-3 md:hidden">
         {rows.map((p) => (
-          <Link key={p.id} to="/admin/montadores/$id" params={{ id: p.id }} className="block rounded-xl border border-border bg-card p-4">
+          <div key={p.id} className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center gap-3">
-              <img src={p.photoUrl} alt={p.name} className="h-12 w-12 rounded-lg object-cover" />
+              <img
+                src={p.photo_url || "/placeholder.svg"}
+                alt={p.name}
+                loading="lazy"
+                decoding="async"
+                className="h-12 w-12 rounded-lg object-cover"
+              />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-bold">{p.name}</div>
-                <div className="truncate text-xs text-muted-foreground">{p.city}, {p.state}</div>
+                <div className="truncate text-xs text-muted-foreground">
+                  {p.city}, {p.state}
+                </div>
               </div>
               <StatusBadge status={p.status} />
             </div>
@@ -140,20 +286,77 @@ function MontadoresList() {
               <span>{p.whatsapp}</span>
               <span>{p.linksCount} links</span>
             </div>
-          </Link>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button asChild size="sm" variant="ghost">
+                <Link to="/admin/montadores/$id" params={{ id: p.id }}>
+                  Detalhes
+                </Link>
+              </Button>
+              <MontadorFormDialog
+                professional={p}
+                onSaved={() => {
+                  void loadProfessionals();
+                }}
+                trigger={
+                  <Button size="sm" variant="outline" className="gap-2">
+                    <Pencil className="h-4 w-4" /> Editar
+                  </Button>
+                }
+              />
+            </div>
+          </div>
         ))}
       </div>
     </div>
   );
 }
 
-function Row({ p }: { p: Professional }) {
-  const toggle = useStore((s) => s.togglePause);
+function Row({
+  p,
+  onStatusChange,
+  onSaved,
+}: {
+  p: AdminProfessional;
+  onStatusChange: (status: Professional["status"]) => void;
+  onSaved: () => void;
+}) {
+  const handleTogglePause = async () => {
+    try {
+      const newStatus = p.status === "pausado" ? "ativo" : "pausado";
+      if (
+        newStatus === "ativo" &&
+        !(p.postal_code && p.street && p.address_number && p.neighborhood && p.city && p.state)
+      ) {
+        return toast.error("Complete o endereço pelo botão Editar antes de reativar o montador.");
+      }
+      const updated = await updateProfessional(p.id, { status: newStatus });
+      await syncProfessionalPublicLinks(updated, p.services);
+
+      if (newStatus === "pausado") {
+        await auditActions.pauseProfessional(p.name);
+      } else {
+        await auditActions.resumeProfessional(p.name);
+      }
+
+      onStatusChange(newStatus);
+      toast.success(newStatus === "pausado" ? "Pausado." : "Reativado.");
+    } catch (error) {
+      console.error("Error toggling pause:", error);
+      toast.error("Erro ao atualizar status");
+    }
+  };
+
   return (
     <tr className="border-t border-border">
       <Td>
         <div className="flex items-center gap-3">
-          <img src={p.photoUrl} alt={p.name} className="h-9 w-9 rounded-md object-cover" />
+          <img
+            src={p.photo_url || "/placeholder.svg"}
+            alt={p.name}
+            loading="lazy"
+            decoding="async"
+            className="h-9 w-9 rounded-md object-cover"
+          />
           <span className="font-semibold">{p.name}</span>
         </div>
       </Td>
@@ -161,21 +364,40 @@ function Row({ p }: { p: Professional }) {
       <Td>{p.city}</Td>
       <Td>{p.state}</Td>
       <Td>{p.linksCount}</Td>
-      <Td><StatusBadge status={p.status} /></Td>
+      <Td>
+        <StatusBadge status={p.status} />
+      </Td>
       <Td className="text-right">
         <div className="inline-flex gap-1">
-          <Button asChild size="sm" variant="ghost" title="Ver detalhes">
-            <Link to="/admin/montadores/$id" params={{ id: p.id }}><Eye className="h-4 w-4" /></Link>
-          </Button>
+          <MontadorFormDialog
+            professional={p}
+            onSaved={onSaved}
+            trigger={
+              <Button size="sm" variant="ghost" title="Editar profissional">
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Editar profissional</span>
+              </Button>
+            }
+          />
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="sm" variant="ghost" title={p.status === "pausado" ? "Reativar" : "Pausar"}>
-                {p.status === "pausado" ? <PlayCircle className="h-4 w-4" /> : <PauseCircle className="h-4 w-4" />}
+              <Button
+                size="sm"
+                variant="ghost"
+                title={p.status === "pausado" ? "Reativar" : "Pausar"}
+              >
+                {p.status === "pausado" ? (
+                  <PlayCircle className="h-4 w-4" />
+                ) : (
+                  <PauseCircle className="h-4 w-4" />
+                )}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{p.status === "pausado" ? "Reativar" : "Pausar"} {p.name}?</AlertDialogTitle>
+                <AlertDialogTitle>
+                  {p.status === "pausado" ? "Reativar" : "Pausar"} {p.name}?
+                </AlertDialogTitle>
                 <AlertDialogDescription>
                   {p.status === "pausado"
                     ? "O profissional voltará a aparecer nos links públicos."
@@ -184,9 +406,7 @@ function Row({ p }: { p: Professional }) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => { toggle(p.id); toast.success(p.status === "pausado" ? "Reativado." : "Pausado."); }}>
-                  Confirmar
-                </AlertDialogAction>
+                <AlertDialogAction onClick={handleTogglePause}>Confirmar</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

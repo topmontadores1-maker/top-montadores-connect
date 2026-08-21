@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthInitializer } from "@/components/auth/AuthInitializer";
+import { CookieConsent } from "@/components/site/CookieConsent";
 
 function NotFoundComponent() {
   return (
@@ -79,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Top Montadores — Encontre um montador perto de você" },
-      { name: "description", content: "Diretório nacional de montadores de móveis e serviços de instalação. Atendimento direto via WhatsApp." },
+      { name: "description", content: "Encontre profissionais para montagem de móveis e serviços de instalação. Atendimento direto via WhatsApp." },
       { property: "og:title", content: "Top Montadores" },
       { property: "og:description", content: "Encontre um montador perto de você." },
       { property: "og:type", content: "website" },
@@ -117,8 +119,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthInitializer />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <CookieConsent />
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
